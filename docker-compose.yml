@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  devops-agent:
+    build: .
+    container_name: devops-ai-agent
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./kubeconfigs:/app/kubeconfigs
+      - ./users.txt:/app/users.txt
+      - /usr/local/bin/kubectl:/usr/local/bin/kubectl:ro
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/login')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

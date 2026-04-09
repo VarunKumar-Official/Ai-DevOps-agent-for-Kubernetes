@@ -1,0 +1,20 @@
+# Docker Ignore File
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.log
+*.pot
+*.pyc
+.env
+.venv
+env/
+venv/
+*.bak
+*.backup*
+.DS_Store
+.git/
+.gitignore
+*.md
+!requirements.txt

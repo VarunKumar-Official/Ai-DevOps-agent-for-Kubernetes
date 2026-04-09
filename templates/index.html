@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DevOps AI Agent</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+        
+        .main-container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: rgba(20, 20, 40, 0.95);
+            border-right: 1px solid rgba(0, 217, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 217, 255, 0.2);
+        }
+        
+        .sidebar-header h3 {
+            color: #00d9ff;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .sidebar-tabs {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 6px;
+            color: #8b8b9a;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            background: rgba(0, 217, 255, 0.1);
+            color: #00d9ff;
+            border-color: #00d9ff;
+        }
+        
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        
+        .history-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            border-left: 3px solid #00d9ff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .history-item:hover {
+            background: rgba(0, 217, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .history-item .cmd {
+            color: #00d9ff;
+            font-size: 12px;
+            font-family: monospace;
+            margin-bottom: 4px;
+        }
+        
+        .history-item .time {
+            color: #8b8b9a;
+            font-size: 10px;
+        }
+        
+        .pod-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border-left: 4px solid #ff4444;
+        }
+        
+        .pod-item.running {
+            border-left-color: #44ff44;
+        }
+        
+        .pod-item .pod-name {
+            color: #e0e0e0;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .pod-item .pod-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .pod-item .pod-status.error {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+        }
+        
+        .pod-item .pod-status.running {
+            background: rgba(68, 255, 68, 0.2);
+            color: #44ff44;
+        }
+        
+        .pod-item .pod-ns {
+            color: #8b8b9a;
+            font-size: 11px;
+        }
+        
+        .pod-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 5px;
+        }
+        
+        .pod-btn {
+            padding: 4px 10px;
+            background: rgba(0, 217, 255, 0.1);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 4px;
+            color: #00d9ff;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .pod-btn:hover {
+            background: rgba(0, 217, 255, 0.2);
+        }
+        
+        .container { 
+            flex: 1;
+            display: flex; 
+            flex-direction: column;
+        }
+        
+        .header { 
+            background: rgba(20, 20, 40, 0.95);
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(0, 217, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .ai-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #00d9ff 0%, #0099ff 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 15px rgba(0, 217, 255, 0.4);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .header-title h1 { 
+            color: #00d9ff;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        
+        .header-title p { 
+            color: #8b8b9a;
+            font-size: 12px;
+        }
+        
+        .header-right { 
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn { 
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 8px;
+            color: #00d9ff;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover { 
+            background: rgba(0, 217, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .chat-box { 
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+            background: rgba(15, 15, 30, 0.6);
+        }
+        
+        .message { 
+            margin: 20px 0;
+            padding: 16px 20px;
+            border-radius: 16px;
+            max-width: 85%;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-message { 
+            background: linear-gradient(135deg, #00d9ff 0%, #0099ff 100%);
+            color: #000;
+            margin-left: auto;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0, 217, 255, 0.3);
+        }
+        
+        .bot-message { 
+            background: rgba(30, 30, 50, 0.9);
+            color: #e0e0e0;
+            white-space: pre-wrap;
+            font-size: 13px;
+            line-height: 1.6;
+            border: 1px solid rgba(0, 217, 255, 0.1);
+        }
+        
+        .input-area { 
+            display: flex;
+            padding: 20px 30px;
+            background: rgba(20, 20, 40, 0.95);
+            border-top: 1px solid rgba(0, 217, 255, 0.2);
+            gap: 15px;
+        }
+        
+        #userInput { 
+            flex: 1;
+            padding: 16px 20px;
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #e0e0e0;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        #userInput:focus { 
+            outline: none;
+            border-color: #00d9ff;
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
+        }
+        
+        #sendBtn { 
+            padding: 16px 35px;
+            background: linear-gradient(135deg, #00d9ff 0%, #0099ff 100%);
+            border: none;
+            border-radius: 12px;
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        #sendBtn:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 217, 255, 0.6);
+        }
+        
+        .sidebar-content::-webkit-scrollbar,
+        .chat-box::-webkit-scrollbar { width: 6px; }
+        .sidebar-content::-webkit-scrollbar-track,
+        .chat-box::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+        .sidebar-content::-webkit-scrollbar-thumb,
+        .chat-box::-webkit-scrollbar-thumb { 
+            background: linear-gradient(135deg, #00d9ff 0%, #0099ff 100%);
+            border-radius: 3px;
+        }
+        
+        .refresh-btn {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            background: rgba(0, 217, 255, 0.1);
+            border: 1px solid rgba(0, 217, 255, 0.3);
+            border-radius: 6px;
+            color: #00d9ff;
+            font-size: 12px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h3>📊 Dashboard</h3>
+                <div class="sidebar-tabs">
+                    <button class="tab-btn active" onclick="switchTab('history')">History</button>
+                    <button class="tab-btn" onclick="switchTab('pods')">Pod Health</button>
+                </div>
+            </div>
+            <div class="sidebar-content" id="sidebarContent">
+                <div id="historyTab">
+                    <p style="color: #8b8b9a; font-size: 12px;">No commands yet</p>
+                </div>
+                <div id="podsTab" style="display: none;">
+                    <!-- Search Bar -->
+                    <div style="margin-bottom: 10px;">
+                        <input type="text" id="searchInput" placeholder="🔍 Search pods, namespaces, ingress..." 
+                               style="width: 100%; padding: 8px 12px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 6px; color: #e0e0e0; font-size: 12px;"
+                               onkeyup="filterResults()">
+                    </div>
+                    
+                    <!-- View Buttons -->
+                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                        <button class="refresh-btn" style="flex: 1; margin: 0;" onclick="loadAllPods()">📦 All Pods</button>
+                        {% if not is_readonly %}
+                        <button class="refresh-btn" style="flex: 1; margin: 0;" onclick="loadNamespaces()">📁 Namespaces</button>
+                        <button class="refresh-btn" style="flex: 1; margin: 0;" onclick="loadIngress()">🌐 Ingress</button>
+                        {% endif %}
+                        <button id="autoRefreshBtn" class="refresh-btn" style="flex: 1; margin: 0; background: rgba(68, 255, 68, 0.1); border: 1px solid #44ff44;" onclick="toggleAutoRefresh()">🔄 Auto: OFF</button>
+                    </div>
+                    
+                    <!-- Cluster Stats -->
+                    <div id="clusterStats" style="background: rgba(0, 217, 255, 0.1); border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 6px; padding: 10px; margin-bottom: 10px; font-size: 11px; display: none;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div>
+                                <div style="color: #8b8b9a;">Total Pods</div>
+                                <div id="totalPods" style="color: #00d9ff; font-size: 16px; font-weight: 600;">-</div>
+                            </div>
+                            <div>
+                                <div style="color: #8b8b9a;">Running</div>
+                                <div id="runningPods" style="color: #4ade80; font-size: 16px; font-weight: 600;">-</div>
+                            </div>
+                            <div>
+                                <div style="color: #8b8b9a;">Errors</div>
+                                <div id="errorPods" style="color: #ff4444; font-size: 16px; font-weight: 600;">-</div>
+                            </div>
+                            {% if not is_readonly %}
+                            <div>
+                                <div style="color: #8b8b9a;">Namespaces</div>
+                                <div id="totalNs" style="color: #00d9ff; font-size: 16px; font-weight: 600;">-</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Health Score -->
+                    <div id="healthScore" style="background: linear-gradient(135deg, rgba(0, 217, 255, 0.1), rgba(74, 222, 128, 0.1)); border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 10px; display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="color: #8b8b9a; font-size: 11px;">Cluster Health</div>
+                                <div id="healthScoreValue" style="color: #00d9ff; font-size: 24px; font-weight: 700;">-</div>
+                            </div>
+                            <div id="healthIcon" style="font-size: 32px;">-</div>
+                        </div>
+                        <div id="healthIssues" style="margin-top: 8px; font-size: 10px; color: #e0e0e0;"></div>
+                    </div>
+                    
+                    <!-- Node Status Panel -->
+                    <div id="nodePanel" style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(0, 217, 255, 0.2); border-radius: 6px; padding: 10px; margin-bottom: 10px; display: none;">
+                        <div style="color: #00d9ff; font-size: 12px; font-weight: 600; margin-bottom: 8px;">Nodes Status</div>
+                        <div id="nodesList" style="font-size: 10px;"></div>
+                    </div>
+                    
+                    <!-- Active Alerts -->
+                    <div id="alertsPanel" style="background: rgba(255, 68, 68, 0.1); border: 1px solid rgba(255, 68, 68, 0.3); border-radius: 6px; padding: 10px; margin-bottom: 10px; display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <div style="color: #ff4444; font-size: 12px; font-weight: 600;">🚨 Active Alerts</div>
+                            <button onclick="dismissAlerts()" style="background: none; border: none; color: #8b8b9a; font-size: 10px; cursor: pointer;">Dismiss</button>
+                        </div>
+                        <div id="alertsList" style="font-size: 10px;"></div>
+                    </div>
+                    
+                    <div id="podsList"></div>
+                    <div id="detailsModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(20, 20, 40, 0.98); border: 1px solid #00d9ff; border-radius: 12px; padding: 20px; width: 85vw; max-height: 90vh; overflow-y: auto; z-index: 1000; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); transition: all 0.3s;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h4 style="color: #00d9ff; margin: 0;">Details</h4>
+                            <div>
+                                <button id="maximizeBtn" onclick="toggleMaximize()" style="background: none; border: none; color: #00d9ff; font-size: 18px; cursor: pointer; margin-right: 10px;">⛶</button>
+                                <button onclick="closeDetails()" style="background: none; border: none; color: #ff4444; font-size: 20px; cursor: pointer;">✕</button>
+                            </div>
+                        </div>
+                        <div id="detailsContent" style="color: #e0e0e0; font-size: 12px; font-family: monospace; white-space: pre-wrap;"></div>
+                    </div>
+                    <div id="modalOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 999;" onclick="closeDetails()"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+            <div class="header">
+                <div class="header-left">
+                    <div class="ai-icon">🤖</div>
+                    <div class="header-title">
+                        <h1>DevOps AI Agent</h1>
+                        <p>Intelligent Kubernetes Management</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <span style="color: #00d9ff; margin-right: 15px; font-size: 14px;">👤 {{ username }}</span>
+                    <button class="btn" onclick="clearHistory()">🗑️ Clear</button>
+                    <button class="btn" onclick="window.location.href='/logout'" style="margin-left: 10px; background: rgba(255, 68, 68, 0.1); border-color: #ff4444; color: #ff4444;">🚪 Logout</button>
+                </div>
+            </div>
+            
+            <div class="chat-box" id="chatBox">
+                <div class="message bot-message">👋 <strong>Hello! I'm your Cluster AI Assistant.</strong>
+
+<strong>Quick Start:</strong>
+• Type <code>recommend</code> for improvements
+• Click "Pod Health" tab to monitor errors
+• All commands saved in History tab
+
+Let's optimize your cluster! 🚀</div>
+            </div>
+            
+            <div class="input-area">
+                <input type="text" id="userInput" placeholder="Ask me anything or run kubectl commands..." autofocus />
+                <button id="sendBtn" onclick="sendMessage()">Send ✨</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chatBox');
+        const userInput = document.getElementById('userInput');
+        let commandHistory = [];
+        let logInterval = null;
+        let isLogsPaused = false;
+        let isMaximized = false;
+        
+        // Search/Filter function
+        function filterResults() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const items = document.querySelectorAll('[data-searchable]');
+            let visibleCount = 0;
+            
+            items.forEach(item => {
+                const searchable = item.getAttribute('data-searchable').toLowerCase();
+                if (searchable.includes(searchTerm)) {
+                    item.style.display = '';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Show count
+            if (searchTerm && visibleCount === 0) {
+                document.getElementById('podsList').innerHTML += '<p style="color: #ff4444; font-size: 12px; margin-top: 10px;">No results found for "' + searchTerm + '"</p>';
+            }
+        }
+
+        function toggleMaximize() {
+            const modal = document.getElementById('detailsModal');
+            isMaximized = !isMaximized;
+            
+            if (isMaximized) {
+                modal.style.width = '98vw';
+                modal.style.maxHeight = '98vh';
+                modal.style.top = '50%';
+                modal.style.left = '50%';
+                document.getElementById('maximizeBtn').textContent = '⛶';
+            } else {
+                modal.style.width = '85vw';
+                modal.style.maxHeight = '90vh';
+                document.getElementById('maximizeBtn').textContent = '⛶';
+            }
+        }
+
+        window.onload = function() {
+            const history = localStorage.getItem('chatHistory');
+            if (history) chatBox.innerHTML = history;
+            
+            const cmds = localStorage.getItem('commandHistory');
+            if (cmds) {
+                commandHistory = JSON.parse(cmds);
+                updateHistoryTab();
+            }
+            
+            loadAllPods();
+        };
+
+        function loadAllPods() {
+            document.getElementById('podsList').innerHTML = '<p style="color: #8b8b9a; font-size: 12px;">Loading all pods...</p>';
+            document.getElementById('clusterStats').style.display = 'block';
+            document.getElementById('healthScore').style.display = 'block';
+            {% if not is_readonly %}
+            document.getElementById('nodePanel').style.display = 'block';
+            // Load nodes first
+            loadNodesStatus();
+            {% endif %}
+            document.getElementById('alertsPanel').style.display = 'block';
+            
+            // Fetch resource metrics
+            const metricsPromise = fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: 'kubectl top pods -A --no-headers 2>/dev/null || echo ""' })
+            }).then(res => res.json()).catch(() => ({response: ''}));
+            
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: 'kubectl get pods -A' })
+            })
+            .then(res => res.json())
+            .then(async data => {
+                const lines = data.response.split('\n').filter(l => l.trim() && !l.startsWith('NAMESPACE') && !l.startsWith('NAME'));
+                const podsList = document.getElementById('podsList');
+                
+                if (lines.length === 0) {
+                    podsList.innerHTML = '<p style="color: #8b8b9a; font-size: 12px;">No pods found</p>';
+                    return;
+                }
+                
+                // Get metrics
+                const metricsData = await metricsPromise;
+                const metricsMap = {};
+                if (metricsData.response) {
+                    metricsData.response.split('\n').forEach(line => {
+                        const parts = line.trim().split(/\s+/);
+                        if (parts.length >= 3) {
+                            const key = `${parts[0]}/${parts[1]}`;
+                            metricsMap[key] = { cpu: parts[2], memory: parts[3] };
+                        }
+                    });
+                }
+                
+                // Calculate stats
+                let running = 0, errors = 0;
+                const namespaces = new Set();
+                const alerts = [];
+                const errorPods = [];
+                
+                lines.forEach(line => {
+                    const parts = line.trim().split(/\s+/);
+                    const ns = parts[0];
+                    const name = parts[1];
+                    const status = parts[3];
+                    namespaces.add(ns);
+                    
+                    if (status === 'Running' || status === 'Completed') {
+                        running++;
+                    } else {
+                        errors++;
+                        errorPods.push({ns, name, status});
+                        
+                        // Create alerts
+                        if (status === 'ImagePullBackOff') {
+                            alerts.push({severity: 'HIGH', message: `${name} (${ns}): ImagePullBackOff`, pod: name, ns: ns, type: 'ImagePullBackOff'});
+                        } else if (status === 'Pending') {
+                            alerts.push({severity: 'MEDIUM', message: `${name} (${ns}): Pending`, pod: name, ns: ns, type: 'Pending'});
+                        } else if (status === 'CrashLoopBackOff') {
+                            alerts.push({severity: 'CRITICAL', message: `${name} (${ns}): CrashLoopBackOff`, pod: name, ns: ns, type: 'CrashLoopBackOff'});
+                        }
+                    }
+                });
+                
+                // Update stats
+                document.getElementById('totalPods').textContent = lines.length;
+                document.getElementById('runningPods').textContent = running;
+                document.getElementById('errorPods').textContent = errors;
+                const totalNsEl = document.getElementById('totalNs');
+                if (totalNsEl) totalNsEl.textContent = namespaces.size;
+                
+                // Calculate health score
+                const healthScore = Math.round((running / lines.length) * 100);
+                updateHealthScore(healthScore, errors, errorPods);
+                
+                // Update alerts
+                updateAlerts(alerts);
+                
+                podsList.innerHTML = lines.map(line => {
+                    const parts = line.trim().split(/\s+/);
+                    const ns = parts[0];
+                    const name = parts[1];
+                    const ready = parts[2];
+                    const status = parts[3];
+                    const isError = status !== 'Running' && status !== 'Completed';
+                    
+                    const metrics = metricsMap[`${ns}/${name}`];
+                    const metricsHtml = metrics ? `
+                        <div style="margin-top: 5px; font-size: 10px; color: #8b8b9a;">
+                            💻 CPU: ${metrics.cpu} | 🧠 Memory: ${metrics.memory}
+                        </div>
+                    ` : '';
+                    
+                    return `
+                        <div class="pod-item ${isError ? '' : 'running'}" onclick="showPodDetails('${name}', '${ns}')" data-searchable="${name} ${ns} ${status}">
+                            <div class="pod-name">${name}</div>
+                            <span class="pod-status ${isError ? 'error' : 'running'}">${status}</span>
+                            <div class="pod-ns">Namespace: ${ns} | Ready: ${ready}</div>
+                            ${metricsHtml}
+                            ${isError ? `<div style="margin-top: 5px;"><button onclick="event.stopPropagation(); quickFix('${name}', '${ns}', '${status}')" style="background: #00d9ff; border: none; color: #000; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer;">🔧 Quick Fix</button></div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            });
+        }
+        
+        function updateHealthScore(score, errors, errorPods) {
+            const scoreEl = document.getElementById('healthScoreValue');
+            const iconEl = document.getElementById('healthIcon');
+            const issuesEl = document.getElementById('healthIssues');
+            
+            scoreEl.textContent = score + '/100';
+            
+            if (score >= 90) {
+                iconEl.textContent = '🟢';
+                scoreEl.style.color = '#4ade80';
+            } else if (score >= 70) {
+                iconEl.textContent = '🟡';
+                scoreEl.style.color = '#fbbf24';
+            } else {
+                iconEl.textContent = '🔴';
+                scoreEl.style.color = '#ff4444';
+            }
+            
+            let issues = [];
+            if (errors > 0) issues.push(`${errors} pods with errors`);
+            
+            issuesEl.innerHTML = issues.length > 0 ? '⚠️ ' + issues.join(', ') : '✅ All systems operational';
+        }
+        
+        function loadNodesStatus() {
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: 'kubectl get nodes' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const lines = data.response.split('\n').filter(l => l.trim() && !l.startsWith('NAME'));
+                const nodesEl = document.getElementById('nodesList');
+                
+                nodesEl.innerHTML = lines.map(line => {
+                    const parts = line.trim().split(/\s+/);
+                    const name = parts[0];
+                    const status = parts[1];
+                    const isReady = status === 'Ready';
+                    
+                    return `
+                        <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(0, 217, 255, 0.1);">
+                            <span>${isReady ? '🟢' : '🔴'} ${name}</span>
+                            <span style="color: ${isReady ? '#4ade80' : '#ff4444'};">${status}</span>
+                        </div>
+                    `;
+                }).join('');
+            });
+        }
+        
+        function updateAlerts(alerts) {
+            const alertsEl = document.getElementById('alertsList');
+            
+            if (alerts.length === 0) {
+                document.getElementById('alertsPanel').style.display = 'none';
+                return;
+            }
+            
+            // Sort by severity
+            const severityOrder = {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2};
+            alerts.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+            
+            alertsEl.innerHTML = alerts.slice(0, 5).map(alert => {
+                const color = alert.severity === 'CRITICAL' ? '#ff4444' : alert.severity === 'HIGH' ? '#ff8800' : '#fbbf24';
+                return `
+                    <div style="padding: 4px 0; border-bottom: 1px solid rgba(255, 68, 68, 0.1);">
+                        <div style="color: ${color}; font-weight: 600;">${alert.severity}</div>
+                        <div style="color: #e0e0e0;">${alert.message}</div>
+                        <button onclick="quickFix('${alert.pod}', '${alert.ns}', '${alert.type}')" style="background: #00d9ff; border: none; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 9px; cursor: pointer; margin-top: 2px;">Fix</button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function quickFix(podName, namespace, issueType) {
+            const fixes = {
+                'ImagePullBackOff': `Create Harbor secret for ${namespace}:\nkubectl create secret docker-registry harbor-secret --docker-server=your-registry.example.com -n ${namespace}`,
+                'Pending': `Check node status and pod anti-affinity rules:\nkubectl describe pod ${podName} -n ${namespace}`,
+                'CrashLoopBackOff': `Check pod logs:\nkubectl logs ${podName} -n ${namespace} --previous`,
+                'OOMKilled': `Increase memory limit:\nkubectl set resources deployment ${podName.split('-')[0]} --limits=memory=512Mi -n ${namespace}`
+            };
+            
+            const fix = fixes[issueType] || `Investigate issue:\nkubectl describe pod ${podName} -n ${namespace}`;
+            
+            if (confirm(`Quick Fix for ${podName}:\n\n${fix}\n\nCopy command to chat?`)) {
+                document.getElementById('userInput').value = fix.split('\n')[1];
+            }
+        }
+        
+        function dismissAlerts() {
+            document.getElementById('alertsPanel').style.display = 'none';
+        }
+        
+        // Consolidated logs for deployment/service
+        function viewConsolidatedLogs(selector, namespace) {
+            document.getElementById('detailsContent').innerHTML = '<p style="color: #8b8b9a; text-align: center; padding: 20px;">Loading consolidated logs...</p>';
+            document.getElementById('detailsModal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+            
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: `kubectl logs -l ${selector} -n ${namespace} --tail=50 --prefix=true` })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const logs = data.response || 'No logs available';
+                document.getElementById('detailsContent').innerHTML = `
+                    <div style="margin-bottom: 10px;">
+                        <button onclick="viewDeploymentPods('${namespace}')" style="padding: 6px 12px; background: rgba(0, 217, 255, 0.1); border: 1px solid #00d9ff; border-radius: 6px; color: #00d9ff; cursor: pointer; font-size: 11px;">
+                            ← Back
+                        </button>
+                        <span style="color: #ffa500; margin-left: 10px; font-weight: 600;">📚 Consolidated Logs: ${selector}</span>
+                    </div>
+                    <div style="background: #000; border: 1px solid rgba(255, 165, 0, 0.3); border-radius: 6px; padding: 10px; max-height: 500px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 10px; color: #4ade80; white-space: pre-wrap; word-break: break-all;">
+${logs}</div>
+                `;
+            });
+        }
+        
+        // Show deployment pods with consolidated logs option
+        function viewDeploymentPods(namespace) {
+            document.getElementById('detailsContent').innerHTML = '<p style="color: #8b8b9a; text-align: center; padding: 20px;">Loading deployments...</p>';
+            document.getElementById('detailsModal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+            
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: `kubectl get deployments -n ${namespace}` })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const lines = data.response.split('\n').filter(l => l.trim() && !l.startsWith('NAME'));
+                
+                if (lines.length === 0) {
+                    document.getElementById('detailsContent').innerHTML = '<p style="color: #8b8b9a; text-align: center; padding: 20px;">No deployments found</p>';
+                    return;
+                }
+                
+                const deploymentsHtml = lines.map(line => {
+                    const parts = line.trim().split(/\s+/);
+                    const name = parts[0];
+                    const ready = parts[1];
+                    
+                    return `
+                        <div style="background: rgba(0, 217, 255, 0.05); border: 1px solid rgba(0, 217, 255, 0.2); border-radius: 6px; padding: 10px; margin-bottom: 8px;">
+                            <div style="color: #00d9ff; font-weight: 600; margin-bottom: 5px;">📦 ${name}</div>
+                            <div style="color: #8b8b9a; font-size: 11px; margin-bottom: 8px;">Ready: ${ready}</div>
+                            <button onclick="viewConsolidatedLogs('app=${name}', '${namespace}')" style="padding: 6px 12px; background: linear-gradient(135deg, #ffa500 0%, #ff8800 100%); border: none; border-radius: 6px; color: #000; font-weight: 600; cursor: pointer; font-size: 11px; margin-right: 5px;">
+                                📚 All Logs
+                            </button>
+                            <button onclick="viewDeploymentDetails('${name}', '${namespace}')" style="padding: 6px 12px; background: linear-gradient(135deg, #00d9ff 0%, #0099ff 100%); border: none; border-radius: 6px; color: #000; font-weight: 600; cursor: pointer; font-size: 11px;">
+                                📋 Details
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+                
+                document.getElementById('detailsContent').innerHTML = `
+                    <div style="margin-bottom: 10px;">
+                        <button onclick="showNamespaceDetails('${namespace}')" style="padding: 6px 12px; background: rgba(0, 217, 255, 0.1); border: 1px solid #00d9ff; border-radius: 6px; color: #00d9ff; cursor: pointer; font-size: 11px;">
+                            ← Back
+                        </button>
+                        <span style="color: #00d9ff; margin-left: 10px; font-weight: 600;">Deployments in ${namespace}</span>
+                    </div>
+                    <div style="max-height: 500px; overflow-y: auto;">
+                        ${deploymentsHtml}
+                    </div>
+                `;
+            });
+        }
+        
+        function viewDeploymentDetails(name, namespace) {
+            document.getElementById('detailsContent').innerHTML = '<p style="color: #8b8b9a; text-align: center; padding: 20px;">Loading deployment details...</p>';
+            
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: `kubectl describe deployment ${name} -n ${namespace}` })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const details = data.response || 'No details available';
+                document.getElementById('detailsContent').innerHTML = `
+                    <div style="margin-bottom: 10px;">
+                        <button onclick="viewDeploymentPods('${namespace}')" style="padding: 6px 12px; background: rgba(0, 217, 255, 0.1); border: 1px solid #00d9ff; border-radius: 6px; color: #00d9ff; cursor: pointer; font-size: 11px;">
+                            ← Back
+                        </button>
+                        <span style="color: #00d9ff; margin-left: 10px; font-weight: 600;">📦 ${name}</span>
+                    </div>
+                    <div style="background: #000; border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 6px; padding: 10px; max-height: 500px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 11px; color: #e0e0e0; white-space: pre-wrap; word-break: break-all;">
+${details}</div>
+                `;
+            });
+        }
+        
+        // Auto-refresh functionality
+        let autoRefreshInterval = null;
+        let autoRefreshEnabled = false;
+        
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            const btn = document.getElementById('autoRefreshBtn');
+            
+            if (autoRefreshEnabled) {
+                btn.textContent = '🔄 Auto: ON';
+                btn.style.background = 'rgba(68, 255, 68, 0.2)';
+                btn.style.borderColor = '#44ff44';
+                
+                autoRefreshInterval = setInterval(() => {
+                    const podsTab = document.getElementById('podsTab');
+                    if (podsTab.style.display !== 'none') {
+                        const statsVisible = document.getElementById('clusterStats').style.display !== 'none';
+                        if (statsVisible) loadAllPods();
+                    }
+                }, 30000);
+            } else {
+                btn.textContent = '🔄 Auto: OFF';
+                btn.style.background = 'rgba(68, 255, 68, 0.1)';
+                btn.style.borderColor = '#44ff44';
+                
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                }
+            }
+        }
+        
+        // Pod logs viewer
+        function viewPodLogs(podName, namespace) {
+            document.getElementById('detailsContent').innerHTML = '<p style="color: #8b8b9a; text-align: center; padding: 20px;">Loading logs...</p>';
+            document.getElementById('detailsModal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+            
+            fetch('/logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pod: podName, namespace: namespace, lines: 200 })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const logs = data.logs || 'No logs available';
+                document.getElementById('detailsContent').innerHTML = `
+                    <div style="margin-bottom: 10px;">
+                        <button onclick="showPodDetails('${podName}', '${namespace}')" style="padding: 6px 12px; background: rgba(0, 217, 255, 0.1); border: 1px solid #00d9ff; border-radius: 6px; color: #00d9ff; cursor: pointer; font-size: 11px;">
+                            ← Back
+                        </button>
+                        <span style="color: #00d9ff; margin-left: 10px; font-weight: 600;">📜 Logs: ${podName}</span>
+                    </div>
+                    <div style="background: #000; border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 6px; padding: 10px; max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 11px; color: #4ade80; white-space: pre-wrap; word-break: break-all;">
+${logs}</div>
+                `;
+            })
+            .catch(err => {
+                document.getElementById('detailsContent').innerHTML = `<p style="color: #ff4444; text-align: center; padding: 20px;">Error loading logs: ${err.message}</p>`;
+            });
+        }
+
+        function loadNamespaces() {
+            document.getElementById('podsList').innerHTML = '<p style="color: #8b8b9a; font-size: 12px;">Loading namespaces...</p>';
+            
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: 'kubectl get namespaces' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const lines = data.response.split('\n').filter(l => l.trim() && !l.startsWith('NAME'));
+                const podsList = document.getElementById('podsList');
+                
+                podsList.innerHTML = lines.map(line => {
+                    const parts = line.trim().split(/\s+/);
+                    const name = parts[0];
+                    const status = parts[1];
+                    
+                    return `
+                        <div class="pod-item running" data-searchable="${name} ${status}" onclick="showNamespaceDetails('${name}')">
+                            <div class="pod-name">📁 ${name}</div>
+                            <span class="pod-status running">${status}</span>
+                        </div>
+                    `;
+                }).join('');
+            });
+        }
+
+        function loadIngress() {
+            document.getElementById('podsList').innerHTML = '<p style="color: #8b8b9a; font-size: 12px;">Loading ingress...</p>';
+            
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: 'kubectl get ingress -A' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const lines = data.response.split('\n').filter(l => l.trim() && !l.startsWith('NAMESPACE'));
+                const podsList = document.getElementById('podsList');
+                
+                if (lines.length === 0) {
+                    podsList.innerHTML = '<p style="color: #8b8b9a; font-size: 12px;">No ingress found</p>';
+                    return;
+                }
+                
+                podsList.innerHTML = lines.map(line => {
+                    const parts = line.trim().split(/\s+/);
+                    const ns = parts[0];
+                    const name = parts[1];
+                    const hosts = parts[3];
+                    
+                    return `
+                        <div class="pod-item running" data-searchable="${name} ${ns}" onclick="showIngressDetails('${name}', '${ns}')">
+                            <div class="pod-name">🌐 ${name}</div>
+                            <div class="pod-ns">Namespace: ${ns}</div>
+                            <div class="pod-ns">Host: ${hosts}</div>
+                        </div>
+                    `;
+                }).join('');
+            });
+        }
+
+        function showPodDetails(name, ns) {
+            document.getElementById('detailsContent').innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <h4 style="color: #00d9ff; margin-bottom: 15px;">Pod: ${name}</h4>
+                    <p style="color: #8b8b9a; margin-bottom: 20px;">Namespace: ${ns}</p>
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="describePod('${name}', '${ns}')" style="padding: 10px 20px; background: linear-gradient(135deg, #ff00ff 0%, #cc00cc 100%); border: none; border-radius: 8px; color: #fff; font-weight: 600; cursor: pointer;">
+                            🔍 Describe Pod
+                        </button>
+                        <button onclick="viewPodLogs('${name}', '${ns}')" style="padding: 10px 20px; background: linear-gradient(135deg, #44ff44 0%, #00cc00 100%); border: none; border-radius: 8px; color: #000; font-weight: 600; cursor: pointer;">
+                            📜 View Logs
+                        </button>
+                        {% if not is_readonly %}
+                        <button onclick="openPodExec('${name}', '${ns}')" style="padding: 10px 20px; background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%); border: none; border-radius: 8px; color: #fff; font-weight: 600; cursor: pointer;">
+                            💻 Exec Command
+                        </button>
+                        {% endif %}
+                        <button onclick="fetchPodLogs('${name}', '${ns}')" style="padding: 10px 20px; background: linear-gradient(135deg, #ffa500 0%, #ff8800 100%); border: none; border-radius: 8px; color: #000; font-weight: 600; cursor: pointer;">
+                            🔄 Stream Logs
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('detailsModal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+        }
+        
+        // Pod exec interface
+        function openPodExec(podName, namespace) {
+            document.getElementById('detailsContent').innerHTML = `
+                <div style="margin-bottom: 10px;">
+                    <button onclick="showPodDetails('${podName}', '${namespace}')" style="padding: 6px 12px; background: rgba(0, 217, 255, 0.1); border: 1px solid #00d9ff; border-radius: 6px; color: #00d9ff; cursor: pointer; font-size: 11px;">
+                        ← Back
+                    </button>
+                    <span style="color: #ff4444; margin-left: 10px; font-weight: 600;">💻 Exec: ${podName}</span>
+                </div>
+                
+                <div style="margin-bottom: 10px;">
+                    <div style="color: #8b8b9a; font-size: 11px; margin-bottom: 5px;">Quick Commands:</div>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button onclick="execQuickCommand('${podName}', '${namespace}', 'ls -la')" style="padding: 4px 8px; background: rgba(0, 217, 255, 0.1); border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 4px; color: #00d9ff; cursor: pointer; font-size: 10px;">ls -la</button>
+                        <button onclick="execQuickCommand('${podName}', '${namespace}', 'pwd')" style="padding: 4px 8px; background: rgba(0, 217, 255, 0.1); border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 4px; color: #00d9ff; cursor: pointer; font-size: 10px;">pwd</button>
+                        <button onclick="execQuickCommand('${podName}', '${namespace}', 'env')" style="padding: 4px 8px; background: rgba(0, 217, 255, 0.1); border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 4px; color: #00d9ff; cursor: pointer; font-size: 10px;">env</button>
+                        <button onclick="execQuickCommand('${podName}', '${namespace}', 'df -h')" style="padding: 4px 8px; background: rgba(0, 217, 255, 0.1); border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 4px; color: #00d9ff; cursor: pointer; font-size: 10px;">df -h</button>
+                        <button onclick="execQuickCommand('${podName}', '${namespace}', 'ps aux')" style="padding: 4px 8px; background: rgba(0, 217, 255, 0.1); border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 4px; color: #00d9ff; cursor: pointer; font-size: 10px;">ps aux</button>
+                        <button onclick="execQuickCommand('${podName}', '${namespace}', 'cat /etc/os-release')" style="padding: 4px 8px; background: rgba(0, 217, 255, 0.1); border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 4px; color: #00d9ff; cursor: pointer; font-size: 10px;">os-release</button>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 10px;">
+                    <input type="text" id="execCommand" placeholder="Enter command (e.g., ls -la, cat /app/config.yaml)" style="width: calc(100% - 90px); padding: 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 6px; color: #e0e0e0; font-family: 'Courier New', monospace; font-size: 12px;" onkeypress="if(event.key==='Enter') execPodCommand('${podName}', '${namespace}')">
+                    <button onclick="execPodCommand('${podName}', '${namespace}')" style="padding: 8px 16px; background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%); border: none; border-radius: 6px; color: #fff; font-weight: 600; cursor: pointer; font-size: 11px; margin-left: 5px;">
+                        Execute
+                    </button>
+                </div>
+                
+                <div id="execOutput" style="background: #000; border: 1px solid rgba(255, 68, 68, 0.3); border-radius: 6px; padding: 10px; max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 11px; color: #4ade80; white-space: pre-wrap; word-break: break-all;">
+Ready to execute commands...
+                </div>
+            `;
+        }
+        
+        function execQuickCommand(podName, namespace, command) {
+            document.getElementById('execCommand').value = command;
+            execPodCommand(podName, namespace);
+        }
+        
+        function execPodCommand(podName, namespace) {
+            const command = document.getElementById('execCommand').value.trim();
+            if (!command) {
+                alert('Please enter a command');
+                return;
+            }
+            
+            const outputDiv = document.getElementById('execOutput');
+            outputDiv.innerHTML = `<span style="color: #00d9ff;">$ ${command}</span>\n<span style="color: #ffa500;">Executing...</span>`;
+            
+            fetch('/exec', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    pod: podName, 
+                    namespace: namespace, 
+                    command: command 
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const output = data.output || 'No output';
+                outputDiv.innerHTML = `<span style="color: #00d9ff;">$ ${command}</span>\n${output}`;
+                outputDiv.scrollTop = outputDiv.scrollHeight;
+            })
+            .catch(err => {
+                outputDiv.innerHTML = `<span style="color: #00d9ff;">$ ${command}</span>\n<span style="color: #ff4444;">Error: ${err.message}</span>`;
+            });
+        }
+        
+        function describePod(podName, namespace) {
+            document.getElementById('detailsContent').innerHTML = '<p style="color: #8b8b9a; text-align: center; padding: 20px;">Loading pod description...</p>';
+            
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: `kubectl describe pod ${podName} -n ${namespace}` })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const description = data.response || 'No description available';
+                document.getElementById('detailsContent').innerHTML = `
+                    <div style="margin-bottom: 10px;">
+                        <button onclick="showPodDetails('${podName}', '${namespace}')" style="padding: 6px 12px; background: rgba(0, 217, 255, 0.1); border: 1px solid #00d9ff; border-radius: 6px; color: #00d9ff; cursor: pointer; font-size: 11px;">
+                            ← Back
+                        </button>
+                        <span style="color: #ff00ff; margin-left: 10px; font-weight: 600;">🔍 Describe: ${podName}</span>
+                    </div>
+                    <div style="background: #000; border: 1px solid rgba(255, 0, 255, 0.3); border-radius: 6px; padding: 10px; max-height: 500px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 11px; color: #e0e0e0; white-space: pre-wrap; word-break: break-all; text-align: left;">
+${description}</div>
+                `;
+            });
+        }
+
+        function fetchPodLogs(name, ns, follow = false) {
+            if (logInterval) {
+                clearInterval(logInterval);
+                logInterval = null;
+            }
+            
+            isLogsPaused = false;
+            
+            document.getElementById('detailsContent').innerHTML = `
+                <div style="margin-bottom: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    <button onclick="showPodDetails('${name}', '${ns}')" style="padding: 6px 12px; background: rgba(0, 217, 255, 0.1); border: 1px solid #00d9ff; border-radius: 6px; color: #00d9ff; cursor: pointer; font-size: 11px;">
+                        ← Back
+                    </button>
+                    <button id="pauseBtn" onclick="togglePause('${name}', '${ns}')" style="padding: 6px 12px; background: rgba(255, 165, 0, 0.2); border: 1px solid #ffa500; border-radius: 6px; color: #ffa500; cursor: pointer; font-size: 11px;">
+                        ⏸ Pause
+                    </button>
+                    <button onclick="fetchPodLogs('${name}', '${ns}', true)" style="padding: 6px 12px; background: rgba(68, 255, 68, 0.2); border: 1px solid #44ff44; border-radius: 6px; color: #44ff44; cursor: pointer; font-size: 11px;">
+                        🔄 Real-time
+                    </button>
+                    <input type="text" id="logFilter" placeholder="Filter logs..." onkeyup="filterLogs()" style="padding: 6px 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 6px; color: #e0e0e0; font-size: 11px; flex: 1; min-width: 150px;">
+                    <button onclick="clearFilter()" style="padding: 6px 12px; background: rgba(255, 68, 68, 0.2); border: 1px solid #ff4444; border-radius: 6px; color: #ff4444; cursor: pointer; font-size: 11px;">
+                        Clear Filter
+                    </button>
+                </div>
+                <div id="logOutput" style="background: #000; color: #0f0; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.5; white-space: pre-wrap; max-height: 70vh; overflow-y: auto;">
+Loading logs...
+                </div>
+            `;
+            
+            loadLogs(name, ns);
+            
+            if (follow) {
+                logInterval = setInterval(() => {
+                    if (!isLogsPaused) {
+                        loadLogs(name, ns);
+                    }
+                }, 3000);
+            }
+        }
+
+        function loadLogs(name, ns) {
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: `kubectl logs ${name} -n ${ns} --tail=200` })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const logOutput = document.getElementById('logOutput');
+                if (logOutput) {
+                    logOutput.setAttribute('data-full-logs', data.response);
+                    logOutput.textContent = data.response;
+                    if (!isLogsPaused) {
+                        logOutput.scrollTop = logOutput.scrollHeight;
+                    }
+                    filterLogs();
+                }
+            });
+        }
+
+        function togglePause(name, ns) {
+            isLogsPaused = !isLogsPaused;
+            const pauseBtn = document.getElementById('pauseBtn');
+            if (isLogsPaused) {
+                pauseBtn.textContent = '▶ Resume';
+                pauseBtn.style.background = 'rgba(68, 255, 68, 0.2)';
+                pauseBtn.style.borderColor = '#44ff44';
+                pauseBtn.style.color = '#44ff44';
+            } else {
+                pauseBtn.textContent = '⏸ Pause';
+                pauseBtn.style.background = 'rgba(255, 165, 0, 0.2)';
+                pauseBtn.style.borderColor = '#ffa500';
+                pauseBtn.style.color = '#ffa500';
+            }
+        }
+
+        function filterLogs() {
+            const filter = document.getElementById('logFilter');
+            const logOutput = document.getElementById('logOutput');
+            
+            if (!filter || !logOutput) return;
+            
+            const filterText = filter.value.toLowerCase();
+            const fullLogs = logOutput.getAttribute('data-full-logs') || logOutput.textContent;
+            
+            if (!filterText) {
+                logOutput.textContent = fullLogs;
+                return;
+            }
+            
+            const lines = fullLogs.split('\n');
+            const filtered = lines.filter(line => line.toLowerCase().includes(filterText));
+            
+            logOutput.textContent = filtered.length > 0 
+                ? filtered.join('\n') 
+                : `No logs matching "${filterText}"`;
+        }
+
+        function clearFilter() {
+            const filter = document.getElementById('logFilter');
+            if (filter) {
+                filter.value = '';
+                filterLogs();
+            }
+        }
+
+        function fetchPodDetails(name, ns) {
+            document.getElementById('detailsContent').innerHTML = 'Loading details...';
+            
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: `kubectl describe pod ${name} -n ${ns}` })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('detailsContent').textContent = data.response;
+            });
+        }
+
+        function showNamespaceDetails(name) {
+            document.getElementById('detailsContent').innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <h4 style="color: #00d9ff; margin-bottom: 15px;">Namespace: ${name}</h4>
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="viewDeploymentPods('${name}')" style="padding: 10px 20px; background: linear-gradient(135deg, #ffa500 0%, #ff8800 100%); border: none; border-radius: 8px; color: #000; font-weight: 600; cursor: pointer;">
+                            📚 Deployments & Logs
+                        </button>
+                        <button onclick="fetchNamespaceDetails('${name}')" style="padding: 10px 20px; background: linear-gradient(135deg, #00d9ff 0%, #0099ff 100%); border: none; border-radius: 8px; color: #000; font-weight: 600; cursor: pointer;">
+                            📦 All Resources
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('detailsModal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+        }
+
+        function fetchNamespaceDetails(name) {
+            document.getElementById('detailsContent').innerHTML = 'Loading resources...';
+            
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: `kubectl get all -n ${name}` })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const resources = data.response || 'No resources found';
+                document.getElementById('detailsContent').innerHTML = `
+                    <div style="margin-bottom: 10px;">
+                        <button onclick="showNamespaceDetails('${name}')" style="padding: 6px 12px; background: rgba(0, 217, 255, 0.1); border: 1px solid #00d9ff; border-radius: 6px; color: #00d9ff; cursor: pointer; font-size: 11px;">
+                            ← Back
+                        </button>
+                        <span style="color: #00d9ff; margin-left: 10px; font-weight: 600;">📦 All Resources: ${name}</span>
+                    </div>
+                    <div style="background: #000; border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 6px; padding: 10px; max-height: 500px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 11px; color: #e0e0e0; white-space: pre-wrap; word-break: break-all;">
+${resources}</div>
+                `;
+            });
+        }
+
+        function showIngressDetails(name, ns) {
+            document.getElementById('detailsContent').innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <h4 style="color: #00d9ff; margin-bottom: 15px;">Ingress: ${name}</h4>
+                    <p style="color: #8b8b9a; margin-bottom: 20px;">Namespace: ${ns}</p>
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="fetchIngressDetails('${name}', '${ns}')" style="padding: 10px 20px; background: linear-gradient(135deg, #00d9ff 0%, #0099ff 100%); border: none; border-radius: 8px; color: #000; font-weight: 600; cursor: pointer;">
+                            🌐 Fetch Configuration
+                        </button>
+                        <button onclick="fetchIngressLogs('${name}', '${ns}')" style="padding: 10px 20px; background: linear-gradient(135deg, #44ff44 0%, #00cc00 100%); border: none; border-radius: 8px; color: #000; font-weight: 600; cursor: pointer;">
+                            📜 Fetch Logs
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('detailsModal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+        }
+
+        function fetchIngressLogs(name, ns, follow = false) {
+            if (logInterval) {
+                clearInterval(logInterval);
+                logInterval = null;
+            }
+            
+            isLogsPaused = false;
+            
+            document.getElementById('detailsContent').innerHTML = `
+                <div style="margin-bottom: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    <button data-searchable="${name} ${ns}" onclick="showIngressDetails('${name}', '${ns}')" style="padding: 6px 12px; background: rgba(0, 217, 255, 0.1); border: 1px solid #00d9ff; border-radius: 6px; color: #00d9ff; cursor: pointer; font-size: 11px;">
+                        ← Back
+                    </button>
+                    <button id="pauseBtn" onclick="toggleIngressPause('${name}', '${ns}')" style="padding: 6px 12px; background: rgba(255, 165, 0, 0.2); border: 1px solid #ffa500; border-radius: 6px; color: #ffa500; cursor: pointer; font-size: 11px;">
+                        ⏸ Pause
+                    </button>
+                    <button onclick="fetchIngressLogs('${name}', '${ns}', true)" style="padding: 6px 12px; background: rgba(68, 255, 68, 0.2); border: 1px solid #44ff44; border-radius: 6px; color: #44ff44; cursor: pointer; font-size: 11px;">
+                        🔄 Real-time
+                    </button>
+                    <input type="text" id="logFilter" placeholder="Filter logs..." onkeyup="filterLogs()" style="padding: 6px 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(0, 217, 255, 0.3); border-radius: 6px; color: #e0e0e0; font-size: 11px; flex: 1; min-width: 150px;">
+                    <button onclick="clearFilter()" style="padding: 6px 12px; background: rgba(255, 68, 68, 0.2); border: 1px solid #ff4444; border-radius: 6px; color: #ff4444; cursor: pointer; font-size: 11px;">
+                        Clear Filter
+                    </button>
+                </div>
+                <div id="logOutput" style="background: #000; color: #0f0; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.5; white-space: pre-wrap; max-height: 70vh; overflow-y: auto;">
+Loading ingress logs...
+                </div>
+            `;
+            
+            loadIngressLogs(name, ns);
+            
+            if (follow) {
+                logInterval = setInterval(() => {
+                    if (!isLogsPaused) {
+                        loadIngressLogs(name, ns);
+                    }
+                }, 3000);
+            }
+        }
+
+        function loadIngressLogs(name, ns) {
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: `kubectl logs -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx --tail=200` })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const logOutput = document.getElementById('logOutput');
+                if (logOutput) {
+                    logOutput.setAttribute('data-full-logs', data.response);
+                    logOutput.textContent = data.response;
+                    if (!isLogsPaused) {
+                        logOutput.scrollTop = logOutput.scrollHeight;
+                    }
+                    filterLogs();
+                }
+            });
+        }
+
+        function toggleIngressPause(name, ns) {
+            isLogsPaused = !isLogsPaused;
+            const pauseBtn = document.getElementById('pauseBtn');
+            if (isLogsPaused) {
+                pauseBtn.textContent = '▶ Resume';
+                pauseBtn.style.background = 'rgba(68, 255, 68, 0.2)';
+                pauseBtn.style.borderColor = '#44ff44';
+                pauseBtn.style.color = '#44ff44';
+            } else {
+                pauseBtn.textContent = '⏸ Pause';
+                pauseBtn.style.background = 'rgba(255, 165, 0, 0.2)';
+                pauseBtn.style.borderColor = '#ffa500';
+                pauseBtn.style.color = '#ffa500';
+            }
+        }
+
+        function fetchIngressDetails(name, ns) {
+            document.getElementById('detailsContent').innerHTML = 'Loading configuration...';
+            
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: `kubectl describe ingress ${name} -n ${ns}` })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('detailsContent').textContent = data.response;
+            });
+        }
+
+        function closeDetails() {
+            document.getElementById('detailsModal').style.display = 'none';
+            document.getElementById('modalOverlay').style.display = 'none';
+            
+            if (logInterval) {
+                clearInterval(logInterval);
+                logInterval = null;
+            }
+            
+            isMaximized = false;
+            const modal = document.getElementById('detailsModal');
+            modal.style.width = '85vw';
+            modal.style.maxHeight = '90vh';
+        }
+
+        function refreshPods() {
+            loadAllPods();
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('historyTab').style.display = tab === 'history' ? 'block' : 'none';
+            document.getElementById('podsTab').style.display = tab === 'pods' ? 'block' : 'none';
+            
+            if (tab === 'pods') {
+                loadAllPods();
+            }
+        }
+
+        function updateHistoryTab() {
+            const historyTab = document.getElementById('historyTab');
+            if (commandHistory.length === 0) {
+                historyTab.innerHTML = '<p style="color: #8b8b9a; font-size: 12px;">No commands yet</p>';
+                return;
+            }
+            
+            historyTab.innerHTML = commandHistory.slice(-10).reverse().map(cmd => `
+                <div class="history-item" onclick="runCommand('${cmd.command.replace(/'/g, "\\'")}')">
+                    <div class="cmd">${cmd.command}</div>
+                    <div class="time">${cmd.time}</div>
+                </div>
+            `).join('');
+        }
+
+        function runCommand(cmd) {
+            userInput.value = cmd;
+            sendMessage();
+        }
+
+        function clearHistory() {
+            if (confirm('Clear all history?')) {
+                localStorage.removeItem('chatHistory');
+                localStorage.removeItem('commandHistory');
+                commandHistory = [];
+                chatBox.innerHTML = '<div class="message bot-message">History cleared!</div>';
+                updateHistoryTab();
+            }
+        }
+
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, 'user');
+            userInput.value = '';
+
+            commandHistory.push({
+                command: message,
+                time: new Date().toLocaleTimeString()
+            });
+            localStorage.setItem('commandHistory', JSON.stringify(commandHistory));
+            updateHistoryTab();
+
+            const loadingMsg = addMessage('Analyzing...', 'bot');
+
+            fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message })
+            })
+            .then(res => res.json())
+            .then(data => {
+                loadingMsg.remove();
+                addMessage(data.response, 'bot');
+                localStorage.setItem('chatHistory', chatBox.innerHTML);
+            })
+            .catch(err => {
+                loadingMsg.remove();
+                addMessage('Error: ' + err.message, 'bot');
+            });
+        }
+
+        function addMessage(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${sender}-message`;
+            msgDiv.textContent = text;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return msgDiv;
+        }
+    </script>
+</body>
+</html>
