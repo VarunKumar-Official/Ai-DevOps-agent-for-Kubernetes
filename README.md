@@ -170,6 +170,8 @@ ollama pull llama3.2
 - Docker (optional)
 - Ollama or Gemini API key (optional for simple mode)
 
-## License
+## Author
 
-MIT
+**Varun Kumar**
+- 📧 <email>
+- 🔗 [LinkedIn](https://linkedin.com/in/devopseng)
